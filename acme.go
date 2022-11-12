@@ -48,7 +48,7 @@ func (c *Client) ObtainCertificate(
 	certKey crypto.PrivateKey,
 	bundle bool,
 	domains ...string,
-) (*certificate.Resource, error) {
+) (*Certificate, error) {
 	if domains == nil || len(domains) == 0 {
 		return nil, c.error("no domain to be obtained")
 	}
@@ -92,5 +92,5 @@ func (c *Client) ObtainCertificate(
 	if err != nil {
 		return nil, err
 	}
-	return cert, nil
+	return NewCertificate(cert)
 }

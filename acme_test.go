@@ -49,12 +49,17 @@ func TestClient_ObtainCertificate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// resource info
 	t.Log("got cert")
 	t.Log("domain", cert.Domain)
 	t.Log("cert url", cert.CertURL)
 	t.Log("cert stable url", cert.CertStableURL)
 	t.Log("private key", string(cert.PrivateKey))
-	t.Log("certificate", string(cert.Certificate))
+	t.Log("certificate", string(cert.Resource.Certificate))
 	t.Log("IssuerCertificate", string(cert.IssuerCertificate))
 	t.Log("csr", string(cert.CSR))
+
+	// meta info
+	t.Log("cert date valid", cert.NotBefore)
+	t.Log("cert date expired", cert.NotAfter)
 }
