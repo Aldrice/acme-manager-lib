@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/go-acme/lego/v4/certificate"
-	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
 )
 
 type Client struct{}
 
-func NewACMEClient() *Client {
+func NewLegoClient() *Client {
 	return &Client{}
 }
 
@@ -42,46 +41,47 @@ func (c *Client) error(format string, a ...any) error {
 
 func (c *Client) ObtainCertificate(
 	email string,
-	provider challenge.Provider,
+	providers []Provider,
+	domains []string,
 	ca CertAgent,
 	acctKey,
 	certKey crypto.PrivateKey,
 	bundle bool,
-	domains ...string,
 ) (*Certificate, error) {
 	if domains == nil || len(domains) == 0 {
 		return nil, c.error("no domain to be obtained")
 	}
-	if provider == nil {
+	if providers == nil || len(providers) == 0 {
 		return nil, c.error("no provider had been issued")
 	}
 
 	a := newAccount(email, acctKey)
 	config := lego.NewConfig(a)
-	config.CADirURL = ca.URL()
+	config.CADirURL = ca.url
 
 	// A client facilitates communication with the CA server.
 	client, err := lego.NewClient(config)
 	if err != nil {
-		return nil, err
+		return nil, c.error(err.Error())
 	}
 
 	// using dns provider
-	err = client.Challenge.SetDNS01Provider(provider)
-	if err != nil {
-		return nil, err
+	for _, provider := range providers {
+		err = setProvider(client, provider)
+		if err != nil {
+			return nil, c.error(err.Error())
+		}
 	}
 
 	// New users will need to register
-	reg, err := client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
+	a.Registration, err = client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
 		TermsOfServiceAgreed: true,
-		Kid:                  ca.Kid(),
-		HmacEncoded:          ca.Hmac(),
+		Kid:                  ca.kid,
+		HmacEncoded:          ca.hmac,
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.error(err.Error())
 	}
-	a.Registration = reg
 
 	// obtain the certification
 	cert, err := client.Certificate.Obtain(certificate.ObtainRequest{
@@ -90,7 +90,7 @@ func (c *Client) ObtainCertificate(
 		PrivateKey: certKey,
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.error(err.Error())
 	}
 	return NewCertificate(cert)
 }

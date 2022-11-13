@@ -5,31 +5,22 @@ import (
 	"github.com/go-acme/lego/v4/certificate"
 )
 
-type CertAgent interface {
-	URL() string
-	Kid() string
-	Hmac() string
-}
+const (
+	DirURLZeroSSL = "https://acme.zerossl.com/v2/DV90"
+)
 
-type ZeroSSL struct {
+type CertAgent struct {
+	url  string
 	kid  string
 	hmac string
 }
 
-func NewZeroSSL(kid string, hmac string) *ZeroSSL {
-	return &ZeroSSL{kid: kid, hmac: hmac}
-}
-
-func (z ZeroSSL) URL() string {
-	return "https://acme.zerossl.com/v2/DV90"
-}
-
-func (z ZeroSSL) Kid() string {
-	return z.kid
-}
-
-func (z ZeroSSL) Hmac() string {
-	return z.hmac
+func NewZeroSSLCA(kid, hmac string) CertAgent {
+	return CertAgent{
+		url:  DirURLZeroSSL,
+		kid:  kid,
+		hmac: hmac,
+	}
 }
 
 type Certificate struct {
