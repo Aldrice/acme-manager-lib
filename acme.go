@@ -3,13 +3,18 @@ package acme
 import (
 	"crypto"
 	"fmt"
+	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/log"
+	"golang.org/x/net/idna"
 
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
 )
 
-type Client struct{}
+type Client struct {
+	// todo: add logger
+}
 
 func NewLegoClient() *Client {
 	return &Client{}
@@ -93,4 +98,36 @@ func (c *Client) ObtainCertificate(
 		return nil, c.error(err.Error())
 	}
 	return NewCertificate(cert)
+}
+
+func (c *Client) GenerateCSR(
+	privateKey crypto.PrivateKey,
+	domains []string,
+	mustStaple bool,
+) ([]byte, error) {
+	if domains == nil || len(domains) == 0 {
+		return nil, c.error("no domain to generate csr")
+	}
+	domains = sanitizeDomain(domains)
+	commonName := domains[0]
+	// todo: handle san domains
+	return certcrypto.GenerateCSR(privateKey, commonName, domains, mustStaple)
+}
+
+// https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.4
+// The domain name MUST be encoded in the form in which it would appear in a certificate.
+// That is, it MUST be encoded according to the rules in Section 7 of [RFC5280].
+//
+// https://www.rfc-editor.org/rfc/rfc5280.html#section-7
+func sanitizeDomain(domains []string) []string {
+	var sanitizedDomains []string
+	for _, domain := range domains {
+		sanitizedDomain, err := idna.ToASCII(domain)
+		if err != nil {
+			log.Infof("skip domain %q: unable to sanitize (punnycode): %v", domain, err)
+		} else {
+			sanitizedDomains = append(sanitizedDomains, sanitizedDomain)
+		}
+	}
+	return sanitizedDomains
 }

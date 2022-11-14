@@ -15,10 +15,10 @@ func TestClient_ObtainCertificate(t *testing.T) {
 	}
 	t.Log("success to create private key")
 
-	provider := NewTencentCloudProvider(
-		"AKIDa0f8NPFuMXUDhusuqkkY8Wfrqa5VhfPv",
-		"TkncJlz0mMjrlPoxVqwZ3MPHzUlqiMn6",
-	)
+	provider, err := GetProvider(TencentCloud, "AKIDa0f8NPFuMXUDhusuqkkY8Wfrqa5VhfPv", "TkncJlz0mMjrlPoxVqwZ3MPHzUlqiMn6")
+	if err != nil {
+		t.Fatal(err)
+	}
 	ca := NewZeroSSLCA(
 		"jyTTP18NxjHlSCCCZu3Hfg",
 		"_gGl1zX7eGEqTzlozK4hCrcBN4AyZ0auihmxIe4LpTIfWI7HXs7qGsk17V0O1nwD9jAdC_H-Uz98Hck9PLQ5XQ",

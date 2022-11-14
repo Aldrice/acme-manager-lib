@@ -29,12 +29,11 @@ type Certificate struct {
 }
 
 func NewCertificate(acrt *certificate.Resource) (*Certificate, error) {
+	crt := &Certificate{Resource: acrt}
 	xcrt, err := x509.ParseCertificate(acrt.Certificate)
 	if err != nil {
-		return nil, err
+		return crt, err
 	}
-	return &Certificate{
-		Resource:    acrt,
-		Certificate: xcrt,
-	}, nil
+	crt.Certificate = xcrt
+	return crt, nil
 }
